@@ -1,0 +1,7 @@
+{
+  "name": "PhotoManager PRO",
+  "description": "A private, modern image management system for internal company use to organize project photos by location. Features a grid-style dashboard, gallery management, and multi-photo uploads with automatic compression.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
