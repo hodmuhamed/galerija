@@ -1,12 +1,11 @@
 import express from 'express';
-// FIX: Add side-effect import for multer to load Express namespace augmentations
-import 'multer';
-import db from '../services/db';
+import 'multer'; // For Express.Multer.File type augmentation
+import pool from '../services/db';
 import sharp from 'sharp';
 import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
 import fs from 'fs';
-import { Photo } from '../../../types';
+import { Photo } from '../types';
 
 // Ensure the upload directory exists
 const uploadDir = process.env.UPLOAD_DIR || 'uploads';
@@ -27,7 +26,7 @@ export const uploadPhotos = async (req: express.Request, res: express.Response) 
 
   try {
     // 1. Verify gallery ownership
-    const galleryResult = await db.query(
+    const galleryResult = await pool.query(
       'SELECT tag, user_id FROM galleries WHERE id = $1',
       [galleryId]
     );
@@ -41,7 +40,7 @@ export const uploadPhotos = async (req: express.Request, res: express.Response) 
     const galleryTag = galleryResult.rows[0].tag;
 
     // 2. Get uploader's name
-    const userResult = await db.query('SELECT name FROM users WHERE id = $1', [req.user!.id]);
+    const userResult = await pool.query('SELECT name FROM users WHERE id = $1', [req.user!.id]);
     const uploadedBy = userResult.rows[0].name;
 
     const uploadedPhotos: Photo[] = [];
@@ -57,33 +56,27 @@ export const uploadPhotos = async (req: express.Request, res: express.Response) 
         .toFile(filepath);
 
       const fileUrl = `/uploads/${filename}`;
-      const takenAt = file.originalname.includes('IMG_') 
-        ? new Date() // Fallback for camera uploads without EXIF
-        : new Date(); // file.lastModified is not available on buffer-based files from multer
-
+      
       const newPhotoQuery = `
         INSERT INTO photos (gallery_id, user_id, url, tag, uploaded_by, taken_at, description)
-        VALUES ($1, $2, $3, $4, $5, $6, $7)
-        RETURNING *
+        VALUES ($1, $2, $3, $4, $5, NOW(), $6)
+        RETURNING id, gallery_id, user_id, url, tag, uploaded_by, description, taken_at, created_at
       `;
-      const newPhotoResult = await db.query(newPhotoQuery, [
+      const newPhotoResult = await pool.query(newPhotoQuery, [
         galleryId,
         req.user!.id,
         fileUrl,
         galleryTag,
         uploadedBy,
-        takenAt,
         'Newly uploaded photo.'
       ]);
       
-      const savedPhoto = newPhotoResult.rows[0];
-      // Construct the full URL for the response
-      savedPhoto.url = `${process.env.API_BASE_URL || ''}${savedPhoto.url}`;
+      const savedPhoto: Photo = newPhotoResult.rows[0];
       uploadedPhotos.push(savedPhoto);
     }
     
     // 4. Update gallery's updated_at timestamp
-    await db.query('UPDATE galleries SET updated_at = NOW() WHERE id = $1', [galleryId]);
+    await pool.query('UPDATE galleries SET updated_at = NOW() WHERE id = $1', [galleryId]);
 
     res.status(201).json({ message: 'Photos uploaded successfully', photos: uploadedPhotos });
   } catch (error) {

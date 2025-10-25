@@ -2,7 +2,6 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
-// FIX: Import `cwd` from process to resolve typing issue with `process.cwd()`
 import { cwd } from 'process';
 
 // Load environment variables
@@ -24,7 +23,6 @@ app.use(express.urlencoded({ extended: true }));
 
 // Serve static files from the 'uploads' directory
 const uploadDir = process.env.UPLOAD_DIR || 'uploads';
-// FIX: Use imported `cwd` instead of `process.cwd`
 app.use('/uploads', express.static(path.resolve(cwd(), uploadDir)));
 
 // Health check route
@@ -47,6 +45,5 @@ app.use((err: Error, req: express.Request, res: express.Response, next: express.
 
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
-  // FIX: Use imported `cwd` instead of `process.cwd`
   console.log(`Serving uploads from: ${path.resolve(cwd(), uploadDir)}`);
 });

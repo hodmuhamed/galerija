@@ -1,8 +1,8 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import db from '../services/db';
-import { User } from '../../../types';
+import pool from '../services/db';
+import { User } from '../types';
 
 const generateToken = (id: string, role: User['role']) => {
   return jwt.sign({ id, role }, process.env.JWT_SECRET!, {
@@ -18,7 +18,7 @@ export const registerUser = async (req: express.Request, res: express.Response) 
   }
 
   try {
-    const userExists = await db.query('SELECT * FROM users WHERE email = $1', [email]);
+    const userExists = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
     if (userExists.rows.length > 0) {
       return res.status(400).json({ message: 'User already exists' });
     }
@@ -31,7 +31,7 @@ export const registerUser = async (req: express.Request, res: express.Response) 
       VALUES ($1, $2, $3, $4)
       RETURNING id, name, email, role, avatar_url
     `;
-    const newUser = await db.query(newUserQuery, [name, email, password_hash, role]);
+    const newUser = await pool.query(newUserQuery, [name, email, password_hash, role]);
     const user = newUser.rows[0];
 
     res.status(201).json({
@@ -58,7 +58,7 @@ export const loginUser = async (req: express.Request, res: express.Response) => 
   }
 
   try {
-    const result = await db.query('SELECT * FROM users WHERE email = $1', [email]);
+    const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
     if (result.rows.length === 0) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
@@ -91,7 +91,7 @@ export const loginUser = async (req: express.Request, res: express.Response) => 
 // @access  Private
 export const getMe = async (req: express.Request, res: express.Response) => {
     try {
-        const result = await db.query('SELECT id, name, email, role, avatar_url FROM users WHERE id = $1', [req.user!.id]);
+        const result = await pool.query('SELECT id, name, email, role, avatar_url FROM users WHERE id = $1', [req.user!.id]);
         if (result.rows.length === 0) {
             return res.status(404).json({ message: 'User not found' });
         }

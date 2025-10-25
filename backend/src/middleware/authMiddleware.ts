@@ -1,9 +1,10 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
+import { User } from '../types';
 
 interface JwtPayload {
   id: string;
-  role: 'Admin' | 'User' | 'Viewer';
+  role: User['role'];
 }
 
 export const protect = (req: express.Request, res: express.Response, next: express.NextFunction) => {
