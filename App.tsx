@@ -12,7 +12,8 @@ import UploadCenter from './components/UploadCenter';
 import Settings from './components/Settings';
 import Profile from './components/Profile';
 
-function App() {
+// FIX: Changed to a const arrow function with React.FC type to help with type inference.
+const App: React.FC = () => {
   return (
     <AppProvider>
       <HashRouter>

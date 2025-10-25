@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { SaveIcon, TrashIcon, UserIcon, SunIcon } from '../constants';
+// FIX: Imported MoonIcon to fix the theme toggle button icon.
+import { SaveIcon, TrashIcon, UserIcon, SunIcon, MoonIcon } from '../constants';
 
 type Tab = 'profile' | 'appearance' | 'users' | 'system';
 
@@ -65,7 +66,8 @@ const Settings: React.FC = () => {
                   className="p-2 rounded-full text-gray-500 dark:text-gray-400 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
                   aria-label="Toggle dark mode"
                 >
-                  {theme === 'light' ? <UserIcon className="w-6 h-6" /> : <SunIcon className="w-6 h-6" />}
+                  {/* FIX: Replaced UserIcon with MoonIcon for light theme toggle */}
+                  {theme === 'light' ? <MoonIcon className="w-6 h-6" /> : <SunIcon className="w-6 h-6" />}
                 </button>
             </div>
           </div>
